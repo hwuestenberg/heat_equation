@@ -19,35 +19,44 @@ import matplotlib.pyplot as plt
 # Define domain (1D rod)
 xmin = 0
 xmax = 1
-X = np.linspace(xmin, xmax, 100)
-dim = X.size
+xlen = abs(xmax - xmin)
+X = np.linspace(xmin, xmax, 10000)
+dx = abs(X[1] - X[0])
+N = X.size
 
 # Define material properties
-rho = 1  # Density [kg/m^3]
-cp = 1  # Specific heat capacity for const pressure
 k = 1  # Conductivity
-alpha = k / (rho * cp)  # Thermal diffusivity
+A_factor = k/dx**2
 
 # Define toeplitz column
-A_row = [2, -1] + [0] * (dim-2)
+A_col = [2, -1] + [0] * (N - 2)
 
 # Define boundary conditions
-bc_left = 100
+bc_left = 70
 bc_right = 0
 
 # Define right-hand side
 h = 0
-B_vector = [bc_left + h] + [h] * (dim-2) + [bc_right + h]
+H_vector = [A_factor * bc_left + h] + [h] * (N - 2) + [A_factor * bc_right + h]
 
 # Define tensors
-A = linalg.toeplitz(A_row)  # dim x dim matrix
-T = np.zeros(dim)  # vector with dim entries
-B = np.array(B_vector)  # vector with dim entries
+A = A_factor * linalg.toeplitz(A_col)  # N x N matrix
+T = np.zeros(N)  # vector with N entries
+H = np.array(H_vector)  # vector with N entries
 
 # Solve linear system
-T = linalg.solve(A, B)  # solution for BCs
+stat_T = linalg.solve(A, H)  # solution for BCs
 
-# Show T
+# Get analytical solution
+exact_T = -(bc_left - bc_right) / xlen * X + bc_left
+
+# Compare temperature
+err = linalg.norm(exact_T - stat_T, 2)
+print(f"Absolute error:{err}")
+
+# Show temperature
 fig, ax = plt.subplots()
-ax.plot(X, T)
+ax.plot(X, exact_T, label="exact")
+ax.plot(X, stat_T, label="stationary")
+ax.legend()
 plt.show()
