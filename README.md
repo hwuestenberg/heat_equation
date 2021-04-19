@@ -1,3 +1,3 @@
 # heat_equation
 
-Solver for instationary and 3D heat transfer problems
+Solver for 1D instationary heat transfer problems
